@@ -1,5 +1,6 @@
 package com.univ.event_manager.data.entity;
 
+import com.univ.event_manager.data.entity.enums.ToDoListType;
 import com.univ.event_manager.data.entity.utils.PostgreSQLEnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

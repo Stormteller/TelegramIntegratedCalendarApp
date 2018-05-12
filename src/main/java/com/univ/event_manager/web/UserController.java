@@ -55,4 +55,11 @@ public class UserController implements AuthenticatedController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> userById(@PathVariable("id") int userId) {
+        UserResponse userResponse = userService.getById(userId);
+
+        return ResponseEntity.ok(userResponse);
+    }
+
 }

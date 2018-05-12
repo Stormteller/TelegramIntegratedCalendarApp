@@ -1,5 +1,7 @@
 package com.univ.event_manager.data.entity;
 
+import com.univ.event_manager.data.entity.enums.RecurringType;
+import com.univ.event_manager.data.entity.utils.PostgreSQLDayOfWeekListType;
 import com.univ.event_manager.data.entity.utils.PostgreSQLEnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +11,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +25,10 @@ import java.util.List;
         name = "pgsql_enum",
         typeClass = PostgreSQLEnumType.class
 )
+@TypeDef(
+        name = "pgsql_enum_array",
+        typeClass = PostgreSQLDayOfWeekListType.class
+)
 public class RecurringRule {
     public static final String TABLE_NAME = "recurring_rule";
 
@@ -32,10 +39,9 @@ public class RecurringRule {
 
     @Builder.Default
     @Column(name = "week_days")
-    @ElementCollection
     @Enumerated(EnumType.STRING)
-    @Type(type = "pgsql_enum")
-    private List<WeekDay> weekDays = new ArrayList<>();
+    @Type(type = "pgsql_enum_array")
+    private List<DayOfWeek> weekDays = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Type(type = "pgsql_enum")
