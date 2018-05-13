@@ -129,4 +129,11 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
         return userConverter.convert(user);
     }
+
+    @Override
+    public UserResponse getByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        return userConverter.convert(user);
+    }
 }

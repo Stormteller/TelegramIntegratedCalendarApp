@@ -62,4 +62,10 @@ public class UserController implements AuthenticatedController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @GetMapping
+    public ResponseEntity<UserResponse> userByEmail(@RequestParam(value = "email") String email) {
+        UserResponse userResponse = userService.getByEmail(email);
+
+        return ResponseEntity.ok(userResponse);
+    }
 }

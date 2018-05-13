@@ -2,12 +2,11 @@ package com.univ.event_manager.service.impl;
 
 import com.univ.event_manager.data.dto.input.*;
 import com.univ.event_manager.data.dto.output.EventResponse;
-import com.univ.event_manager.data.entity.Event;
-import com.univ.event_manager.data.entity.Location;
-import com.univ.event_manager.data.entity.RecurringRule;
-import com.univ.event_manager.data.entity.User;
+import com.univ.event_manager.data.entity.*;
 import com.univ.event_manager.data.entity.enums.RecurringType;
 import com.univ.event_manager.data.exception.NotFoundException;
+import com.univ.event_manager.data.exception.UnauthorizedException;
+import com.univ.event_manager.data.repository.EventParticipantRepository;
 import com.univ.event_manager.data.repository.EventRepository;
 import com.univ.event_manager.data.repository.RecurringRuleRepository;
 import com.univ.event_manager.data.repository.UserRepository;
@@ -22,6 +21,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class EventServiceImpl implements EventService {
@@ -30,16 +31,20 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final RecurringRuleRepository recurringRuleRepository;
     private final UserRepository userRepository;
+    private final EventParticipantRepository eventParticipantRepository;
 
     private final Converter<Event, EventResponse> eventConverter;
 
     @Autowired
     public EventServiceImpl(EventRepository eventRepository,
                             RecurringRuleRepository recurringRuleRepository,
-                            UserRepository userRepository, Converter<Event, EventResponse> eventConverter) {
+                            UserRepository userRepository,
+                            EventParticipantRepository eventParticipantRepository,
+                            Converter<Event, EventResponse> eventConverter) {
         this.eventRepository = eventRepository;
         this.recurringRuleRepository = recurringRuleRepository;
         this.userRepository = userRepository;
+        this.eventParticipantRepository = eventParticipantRepository;
         this.eventConverter = eventConverter;
     }
 
@@ -50,17 +55,31 @@ public class EventServiceImpl implements EventService {
     public EventResponse create(CreateEventInput input, long creatorId) {
         User user = userRepository.findById(creatorId).orElseThrow(() -> new NotFoundException("User not found"));
 
-        Event createdEvent;
-        if(input.isRecurring()) {
-            createdEvent = createRecurringEvent(input, user).get(0);
-        } else {
-            createdEvent = createSingleTimeEvent(input, user);
-        }
+        Event createdEvent = createEvent(input, user);
+
+        createEventParticipantForEventOwner(createdEvent);
 
         //TODO: Create Invites
         //TODO: Create Reminders
 
         return eventConverter.convert(createdEvent);
+    }
+
+    private EventParticipant createEventParticipantForEventOwner(Event event) {
+        EventParticipant eventParticipant = EventParticipant.builder()
+                .eventId(event.getId())
+                .user(event.getCreator())
+                .build();
+
+        return eventParticipantRepository.save(eventParticipant);
+    }
+
+    private Event createEvent(CreateEventInput input, User user) {
+        if(input.isRecurring()) {
+            return createRecurringEvent(input, user).get(0);
+        } else {
+            return createSingleTimeEvent(input, user);
+        }
     }
 
     private Event createSingleTimeEvent(CreateEventInput input, User creator) {
@@ -76,9 +95,7 @@ public class EventServiceImpl implements EventService {
                 .creator(creator)
                 .build();
 
-        event = eventRepository.save(event);
-
-        return event;
+        return eventRepository.save(event);
     }
 
     private Location buildLocationFromInput(LocationInput input) {
@@ -187,21 +204,33 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventResponse> getEventByFilter(FilterEventsInput input, long userId) {
-        return null;
+        if(userId != input.getUserId())
+            throw new UnauthorizedException("You cannot see not your events");
+
+        List<Event> events = eventRepository.findByUserInRange(input.getUserId(), input.getFrom(), input.getTo());
+
+        return events.stream().map(eventConverter::convert).collect(Collectors.toList());
     }
 
     @Override
     public EventResponse getEventById(long eventId, long userId) {
-        return null;
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        if(!event.isPublic() && event.getCreator().getId() != userId) {
+            throw new UnauthorizedException("Access denied");
+        }
+
+        return eventConverter.convert(event);
     }
 
     @Override
     public EventResponse update(long eventId, UpdateEventInput input) {
-        return null;
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Override
     public void delete(long eventId) {
-
+        throw new RuntimeException("Not implemented yet");
     }
 }

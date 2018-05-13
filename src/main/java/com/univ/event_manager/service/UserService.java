@@ -11,4 +11,5 @@ public interface UserService extends UserDetailsService {
     SignInResponse signIn(SignInInput signInInput);
     SignUpResponse createUser(SignUpInput signUpInput);
     UserResponse getById(long id);
+    UserResponse getByEmail(String email);
 }
