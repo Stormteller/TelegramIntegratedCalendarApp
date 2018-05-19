@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface EventRepository extends JpaRepository<Event, Long> {
     Optional<Event> findById(long id);
 
-    @Query("SELECT e FROM event_participants p JOIN event e ON e.id=p.event_id WHERE p.user_id=?1 " +
-            "AND (e.start_at BETWEEN ?2 AND ?3 OR e.finish_at BETWEEN ?2 AND ?3)")
+    @Query("SELECT e FROM EventParticipant p JOIN Event e ON e.id=p.eventId WHERE p.user.id=?1 " +
+            "AND (e.startAt BETWEEN ?2 AND ?3 OR e.finishAt BETWEEN ?2 AND ?3)")
     List<Event> findByUserInRange(long userId, LocalDateTime from, LocalDateTime to);
 }

@@ -6,11 +6,12 @@ import com.univ.event_manager.data.entity.*;
 import com.univ.event_manager.data.entity.enums.RecurringType;
 import com.univ.event_manager.data.exception.NotFoundException;
 import com.univ.event_manager.data.exception.UnauthorizedException;
-import com.univ.event_manager.data.repository.EventParticipantRepository;
 import com.univ.event_manager.data.repository.EventRepository;
 import com.univ.event_manager.data.repository.RecurringRuleRepository;
 import com.univ.event_manager.data.repository.UserRepository;
+import com.univ.event_manager.service.EventParticipantService;
 import com.univ.event_manager.service.EventService;
+import com.univ.event_manager.service.InvitationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,7 +31,9 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final RecurringRuleRepository recurringRuleRepository;
     private final UserRepository userRepository;
-    private final EventParticipantRepository eventParticipantRepository;
+
+    private final InvitationService invitationService;
+    private final EventParticipantService eventParticipantService;
 
     private final Converter<Event, EventResponse> eventConverter;
 
@@ -39,12 +41,14 @@ public class EventServiceImpl implements EventService {
     public EventServiceImpl(EventRepository eventRepository,
                             RecurringRuleRepository recurringRuleRepository,
                             UserRepository userRepository,
-                            EventParticipantRepository eventParticipantRepository,
+                            InvitationService invitationService,
+                            EventParticipantService eventParticipantService,
                             Converter<Event, EventResponse> eventConverter) {
         this.eventRepository = eventRepository;
         this.recurringRuleRepository = recurringRuleRepository;
         this.userRepository = userRepository;
-        this.eventParticipantRepository = eventParticipantRepository;
+        this.invitationService = invitationService;
+        this.eventParticipantService = eventParticipantService;
         this.eventConverter = eventConverter;
     }
 
@@ -57,21 +61,11 @@ public class EventServiceImpl implements EventService {
 
         Event createdEvent = createEvent(input, user);
 
-        createEventParticipantForEventOwner(createdEvent);
+        eventParticipantService.create(createdEvent.getId(), createdEvent.getCreator());
 
-        //TODO: Create Invites
         //TODO: Create Reminders
 
         return eventConverter.convert(createdEvent);
-    }
-
-    private EventParticipant createEventParticipantForEventOwner(Event event) {
-        EventParticipant eventParticipant = EventParticipant.builder()
-                .eventId(event.getId())
-                .user(event.getCreator())
-                .build();
-
-        return eventParticipantRepository.save(eventParticipant);
     }
 
     private Event createEvent(CreateEventInput input, User user) {
@@ -95,7 +89,11 @@ public class EventServiceImpl implements EventService {
                 .creator(creator)
                 .build();
 
-        return eventRepository.save(event);
+        event = eventRepository.save(event);
+
+        invitationService.create(input.getInviteUsers(), event.getId(), creator.getId());
+
+        return event;
     }
 
     private Location buildLocationFromInput(LocationInput input) {
@@ -141,7 +139,13 @@ public class EventServiceImpl implements EventService {
 
             createdEvents.add(event);
         }
-        return eventRepository.saveAll(createdEvents);
+
+        createdEvents = eventRepository.saveAll(createdEvents);
+
+        createdEvents
+                .forEach(event -> invitationService.create(input.getInviteUsers(), event.getId(), creator.getId()));
+
+        return createdEvents;
     }
 
     private LocalDateTime calculateNextEventTime(LocalDateTime firstTime, RecurringRule recurringRule, int number) {

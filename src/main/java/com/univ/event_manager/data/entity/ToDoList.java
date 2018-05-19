@@ -6,11 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = ToDoList.TABLE_NAME)
@@ -44,4 +48,9 @@ public class ToDoList {
 
     @Column(name = "creator_id")
     private long creatorId;
+
+    @Builder.Default
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "toDoListId")
+    @Fetch(FetchMode.SUBSELECT)
+    private List<ToDoItem> items = new ArrayList<>();
 }
