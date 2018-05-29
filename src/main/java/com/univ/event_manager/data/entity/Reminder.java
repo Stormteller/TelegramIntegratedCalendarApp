@@ -29,5 +29,9 @@ public class Reminder {
     @Column(name = "reminding_time")
     private LocalDateTime remindingTime = LocalDateTime.now();
 
+    @Builder.Default
+    @Column(name = "is_sent")
+    private boolean sent = false;
+
     private String message;
 }

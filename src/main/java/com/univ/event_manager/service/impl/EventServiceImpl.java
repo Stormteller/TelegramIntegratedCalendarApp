@@ -2,7 +2,10 @@ package com.univ.event_manager.service.impl;
 
 import com.univ.event_manager.data.dto.input.*;
 import com.univ.event_manager.data.dto.output.EventResponse;
-import com.univ.event_manager.data.entity.*;
+import com.univ.event_manager.data.entity.Event;
+import com.univ.event_manager.data.entity.Location;
+import com.univ.event_manager.data.entity.RecurringRule;
+import com.univ.event_manager.data.entity.User;
 import com.univ.event_manager.data.entity.enums.RecurringType;
 import com.univ.event_manager.data.exception.NotFoundException;
 import com.univ.event_manager.data.exception.UnauthorizedException;
@@ -12,6 +15,7 @@ import com.univ.event_manager.data.repository.UserRepository;
 import com.univ.event_manager.service.EventParticipantService;
 import com.univ.event_manager.service.EventService;
 import com.univ.event_manager.service.InvitationService;
+import com.univ.event_manager.service.ReminderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -21,7 +25,9 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -34,6 +40,7 @@ public class EventServiceImpl implements EventService {
 
     private final InvitationService invitationService;
     private final EventParticipantService eventParticipantService;
+    private final ReminderService reminderService;
 
     private final Converter<Event, EventResponse> eventConverter;
 
@@ -43,12 +50,14 @@ public class EventServiceImpl implements EventService {
                             UserRepository userRepository,
                             InvitationService invitationService,
                             EventParticipantService eventParticipantService,
+                            ReminderService reminderService,
                             Converter<Event, EventResponse> eventConverter) {
         this.eventRepository = eventRepository;
         this.recurringRuleRepository = recurringRuleRepository;
         this.userRepository = userRepository;
         this.invitationService = invitationService;
         this.eventParticipantService = eventParticipantService;
+        this.reminderService = reminderService;
         this.eventConverter = eventConverter;
     }
 
@@ -61,15 +70,11 @@ public class EventServiceImpl implements EventService {
 
         Event createdEvent = createEvent(input, user);
 
-        eventParticipantService.create(createdEvent.getId(), createdEvent.getCreator());
-
-        //TODO: Create Reminders
-
         return eventConverter.convert(createdEvent);
     }
 
     private Event createEvent(CreateEventInput input, User user) {
-        if(input.isRecurring()) {
+        if (input.isRecurring()) {
             return createRecurringEvent(input, user).get(0);
         } else {
             return createSingleTimeEvent(input, user);
@@ -91,7 +96,7 @@ public class EventServiceImpl implements EventService {
 
         event = eventRepository.save(event);
 
-        invitationService.create(input.getInviteUsers(), event.getId(), creator.getId());
+        initializeEvent(event, input);
 
         return event;
     }
@@ -120,8 +125,8 @@ public class EventServiceImpl implements EventService {
 
         List<Event> createdEvents = new ArrayList<>();
         Duration eventDuration = Duration.between(input.getStartAt(), input.getFinishAt());
-        
-        for(int eventNumber = 0; eventNumber < EVENTS_TO_CREATE_IF_RECURRING; eventNumber++) {
+
+        for (int eventNumber = 0; eventNumber < EVENTS_TO_CREATE_IF_RECURRING; eventNumber++) {
             LocalDateTime eventStartAt = calculateNextEventTime(input.getStartAt(), recurringRule, eventNumber);
 
             Event event = Event.builder()
@@ -142,15 +147,14 @@ public class EventServiceImpl implements EventService {
 
         createdEvents = eventRepository.saveAll(createdEvents);
 
-        createdEvents
-                .forEach(event -> invitationService.create(input.getInviteUsers(), event.getId(), creator.getId()));
+        createdEvents.forEach(event -> initializeEvent(event, input));
 
         return createdEvents;
     }
 
     private LocalDateTime calculateNextEventTime(LocalDateTime firstTime, RecurringRule recurringRule, int number) {
         ChronoUnit chronoUnit = chronoUnitFromRecurringType(recurringRule.getRecurringType());
-            if(recurringRule.getRecurringType() != RecurringType.WEEKLY) {
+        if (recurringRule.getRecurringType() != RecurringType.WEEKLY) {
             int step = number * recurringRule.getInterval();
             return firstTime.plus(step, chronoUnit);
         } else {
@@ -172,7 +176,7 @@ public class EventServiceImpl implements EventService {
                 .findFirst();
 
         LocalDateTime onWeekWithFirstEvent = firstTime;
-        if(!currentWeekFirstTimeWeekDay.isPresent()) {
+        if (!currentWeekFirstTimeWeekDay.isPresent()) {
             onWeekWithFirstEvent = firstTime.plusWeeks(recurringRule.getInterval());
         }
 
@@ -206,9 +210,16 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    private void initializeEvent(Event event, CreateEventInput input) {
+        invitationService.create(input.getInviteUsers(), event.getId(), event.getCreator().getId());
+        eventParticipantService.create(event.getId(), event.getCreator());
+        reminderService.create(event.getId(), input.getReminders());
+    }
+
     @Override
+    @Transactional
     public List<EventResponse> getEventByFilter(FilterEventsInput input, long userId) {
-        if(userId != input.getUserId())
+        if (userId != input.getUserId())
             throw new UnauthorizedException("You cannot see not your events");
 
         List<Event> events = eventRepository.findByUserInRange(input.getUserId(), input.getFrom(), input.getTo());
@@ -217,11 +228,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventResponse getEventById(long eventId, long userId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 
-        if(!event.isPublic() && event.getCreator().getId() != userId) {
+        if (!event.isPublic() && event.getCreator().getId() != userId) {
             throw new UnauthorizedException("Access denied");
         }
 
@@ -229,12 +241,21 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventResponse update(long eventId, UpdateEventInput input) {
         throw new RuntimeException("Not implemented yet");
     }
 
     @Override
-    public void delete(long eventId) {
-        throw new RuntimeException("Not implemented yet");
+    @Transactional
+    public void delete(long eventId, long userId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        if (event.getCreator().getId() != userId) {
+            throw new UnauthorizedException("Access denied");
+        }
+
+        eventRepository.delete(event);
     }
 }

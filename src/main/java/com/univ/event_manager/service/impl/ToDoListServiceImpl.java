@@ -2,11 +2,13 @@ package com.univ.event_manager.service.impl;
 
 import com.univ.event_manager.data.dto.input.CreateToDoListInput;
 import com.univ.event_manager.data.dto.input.ToDoListFilterInput;
+import com.univ.event_manager.data.dto.input.UpdateToDoListInput;
 import com.univ.event_manager.data.dto.output.ToDoListResponse;
 import com.univ.event_manager.data.entity.ToDoList;
 import com.univ.event_manager.data.entity.enums.ToDoListType;
 import com.univ.event_manager.data.exception.BadRequestException;
 import com.univ.event_manager.data.exception.NotFoundException;
+import com.univ.event_manager.data.exception.UnauthorizedException;
 import com.univ.event_manager.data.repository.ToDoListRepository;
 import com.univ.event_manager.service.ToDoListService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,5 +82,38 @@ public class ToDoListServiceImpl implements ToDoListService {
                 toDoItemRepository.findById(id).orElseThrow(() -> new NotFoundException("To-do-list not found"));
 
         return toDoListConverter.convert(toDoList);
+    }
+
+    @Override
+    @Transactional
+    public ToDoListResponse update(long id, UpdateToDoListInput input, long userId) {
+        ToDoList toDoList =
+                toDoItemRepository.findById(id).orElseThrow(() -> new NotFoundException("To-do-list not found"));
+
+        checkRights(toDoList, userId);
+
+        toDoList.setForDay(input.getForDay());
+        toDoList.setName(input.getName());
+        toDoList.setEventId(input.getEventId());
+        toDoList.setType(input.getType());
+
+        return toDoListConverter.convert(toDoList);
+    }
+
+    @Override
+    @Transactional
+    public void delete(long id, long userId) {
+        ToDoList toDoList =
+                toDoItemRepository.findById(id).orElseThrow(() -> new NotFoundException("To-do-list not found"));
+
+        checkRights(toDoList, userId);
+
+        toDoItemRepository.delete(toDoList);
+    }
+
+    private void checkRights(ToDoList toDoList, long userId) {
+        if(toDoList.getCreatorId() != userId) {
+            throw new UnauthorizedException("Access denied");
+        }
     }
 }

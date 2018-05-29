@@ -42,7 +42,7 @@ public class EventController implements AuthenticatedController {
 
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> eventById(Authentication authentication,
-                                                 @PathVariable("id") long id) {
+                                                   @PathVariable("id") long id) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
         EventResponse eventResponse = eventService.getEventById(id, authorizedUserDetails.getId());
 
@@ -51,12 +51,19 @@ public class EventController implements AuthenticatedController {
 
     @GetMapping
     public ResponseEntity<List<EventResponse>> eventByFilter(Authentication authentication,
-                                                           FilterEventsInput input) {
+                                                             FilterEventsInput input) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
         List<EventResponse> eventsByFilter = eventService.getEventByFilter(input, authorizedUserDetails.getId());
 
         return ResponseEntity.ok(eventsByFilter);
+    }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> delete(Authentication authentication,
+                                          @PathVariable("id") long id) {
+        AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
+        eventService.delete(id, authorizedUserDetails.getId());
 
+        return ResponseEntity.ok(true);
     }
 }

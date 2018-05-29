@@ -2,6 +2,8 @@ package com.univ.event_manager.web;
 
 import com.univ.event_manager.data.dto.input.SignInInput;
 import com.univ.event_manager.data.dto.input.SignUpInput;
+import com.univ.event_manager.data.dto.input.UpdateProfileInput;
+import com.univ.event_manager.data.dto.input.UpdateUserInput;
 import com.univ.event_manager.data.dto.output.SignInResponse;
 import com.univ.event_manager.data.dto.output.SignUpResponse;
 import com.univ.event_manager.data.dto.output.UserResponse;
@@ -51,6 +53,14 @@ public class UserController implements AuthenticatedController {
     public ResponseEntity<UserResponse> me(Authentication auth) {
         AuthorizedUserDetails authorizedUserDetails = this.authPrincipal(auth);
         UserResponse userResponse = userService.getById(authorizedUserDetails.getId());
+
+        return ResponseEntity.ok(userResponse);
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateMe(Authentication auth, UpdateProfileInput input) {
+        AuthorizedUserDetails authorizedUserDetails = this.authPrincipal(auth);
+        UserResponse userResponse = userService.updateUser(input, authorizedUserDetails.getId());
 
         return ResponseEntity.ok(userResponse);
     }

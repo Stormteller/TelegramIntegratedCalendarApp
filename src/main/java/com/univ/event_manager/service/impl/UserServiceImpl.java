@@ -3,10 +3,14 @@ package com.univ.event_manager.service.impl;
 import com.univ.event_manager.config.security.JwtTokenProvider;
 import com.univ.event_manager.data.dto.input.SignInInput;
 import com.univ.event_manager.data.dto.input.SignUpInput;
+import com.univ.event_manager.data.dto.input.UpdateProfileInput;
+import com.univ.event_manager.data.dto.input.UpdateUserInput;
+import com.univ.event_manager.data.dto.output.ProfileResponse;
 import com.univ.event_manager.data.dto.output.SignInResponse;
 import com.univ.event_manager.data.dto.output.SignUpResponse;
 import com.univ.event_manager.data.dto.output.UserResponse;
 import com.univ.event_manager.data.dto.security.AuthorizedUserDetails;
+import com.univ.event_manager.data.entity.Profile;
 import com.univ.event_manager.data.entity.User;
 import com.univ.event_manager.data.exception.BadRequestException;
 import com.univ.event_manager.data.exception.NotFoundException;
@@ -134,6 +138,16 @@ public class UserServiceImpl implements UserService {
     public UserResponse getByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+        return userConverter.convert(user);
+    }
+
+    @Override
+    public UserResponse updateUser(UpdateProfileInput input, long id) {
+        profileService.updateProfile(id, input);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         return userConverter.convert(user);
     }
 }

@@ -14,5 +14,5 @@ public interface EventService {
     List<EventResponse> getEventByFilter(FilterEventsInput input, long userId);
     EventResponse getEventById(long eventId, long userId);
     EventResponse update(long eventId, UpdateEventInput input);
-    void delete(long eventId);
+    void delete(long eventId, long userId);
 }

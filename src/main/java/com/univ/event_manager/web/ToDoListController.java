@@ -1,11 +1,10 @@
 package com.univ.event_manager.web;
 
-import com.univ.event_manager.data.dto.input.CreateEventInput;
 import com.univ.event_manager.data.dto.input.CreateToDoListInput;
 import com.univ.event_manager.data.dto.input.ToDoListFilterInput;
+import com.univ.event_manager.data.dto.input.UpdateToDoListInput;
 import com.univ.event_manager.data.dto.output.ToDoListResponse;
 import com.univ.event_manager.data.dto.security.AuthorizedUserDetails;
-import com.univ.event_manager.data.entity.ToDoList;
 import com.univ.event_manager.data.exception.BadRequestException;
 import com.univ.event_manager.service.ToDoListService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,7 @@ public class ToDoListController implements AuthenticatedController {
     public ResponseEntity<ToDoListResponse> create(@RequestBody @Valid CreateToDoListInput input,
                                                    BindingResult params,
                                                    Authentication authentication) {
-        if(params.hasErrors()) {
+        if (params.hasErrors()) {
             throw new BadRequestException(params.getFieldErrors().toString());
         }
 
@@ -61,5 +60,26 @@ public class ToDoListController implements AuthenticatedController {
         ToDoListResponse toDoList = toDoListService.getById(id, authorizedUserDetails.getId());
 
         return ResponseEntity.ok(toDoList);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ToDoListResponse> update(@PathVariable("id") long toDoListId,
+                                                   UpdateToDoListInput input,
+                                                   Authentication authentication) {
+        AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
+
+        ToDoListResponse toDoList = toDoListService.update(toDoListId, input, authorizedUserDetails.getId());
+
+        return ResponseEntity.ok(toDoList);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> delete(@PathVariable("id") long toDoListId,
+                                          Authentication authentication) {
+        AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
+
+        toDoListService.delete(toDoListId, authorizedUserDetails.getId());
+
+        return ResponseEntity.ok(true);
     }
 }

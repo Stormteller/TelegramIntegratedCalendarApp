@@ -45,7 +45,7 @@ public class CreateEventInput {
     private RecurringRuleInput recurringRule;
 
     @Size(max = 50)
-    private List<LocalDateTime> reminders = new ArrayList<>();
+    private List<ReminderInput> reminders = new ArrayList<>();
 
     @Size(max = 50)
     private List<Long> inviteUsers = new ArrayList<>();

@@ -46,19 +46,16 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setFirstName(updateProfileInput.getFirstName());
         profile.setLastName(updateProfileInput.getLastName());
 
-        profile = profileRepository.save(profile);
-
         return profileConverter.convert(profile);
     }
 
     @Override
+    @Transactional
     public ProfileResponse connectTelegramAccount(long profileId, String telegramId) {
         Profile profile = profileRepository.findById(profileId)
                 .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         profile.setTelegramId(telegramId);
-
-        profile = profileRepository.save(profile);
 
         return profileConverter.convert(profile);
     }
