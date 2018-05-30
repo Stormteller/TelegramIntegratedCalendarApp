@@ -36,7 +36,7 @@ public class ReminderScheduler extends AbstractJobScheduler {
                 .forJob(detail)
                 .startAt(date)
                 .withIdentity(REMINDER_IDENTITY)
-                .withSchedule(cronSchedule("* * * * * ?"))
+                .withSchedule(cronSchedule("0 0/1 * * * ?"))
                 .build();
     }
 

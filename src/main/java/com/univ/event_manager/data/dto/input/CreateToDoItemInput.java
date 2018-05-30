@@ -11,6 +11,7 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateToDoItemInput {
+    @NotNull
     private long toDoListId;
 
     @Size(max = 255)

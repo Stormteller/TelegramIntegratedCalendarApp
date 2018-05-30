@@ -41,7 +41,7 @@ public class ToDoListServiceImpl implements ToDoListService {
                 .forDay(input.getForDay())
                 .name(input.getName())
                 .type(input.getType())
-                .creatorId(input.getEventId())
+                .creatorId(creatorId)
                 .eventId(input.getEventId())
                 .build();
 

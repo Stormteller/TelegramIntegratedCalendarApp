@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-//@ControllerAdvice
+@ControllerAdvice
 public class GlobalErrorHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException exception) {
@@ -27,7 +27,7 @@ public class GlobalErrorHandler {
     @ExceptionHandler({NotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException exception) {
         String message = "Not found. " + exception.getMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(message));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(message));
     }
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class})
