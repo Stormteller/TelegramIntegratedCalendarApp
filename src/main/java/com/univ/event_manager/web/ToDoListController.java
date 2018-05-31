@@ -62,17 +62,6 @@ public class ToDoListController implements AuthenticatedController {
         return ResponseEntity.ok(toDoList);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ToDoListResponse> update(@PathVariable("id") long toDoListId,
-                                                   UpdateToDoListInput input,
-                                                   Authentication authentication) {
-        AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
-
-        ToDoListResponse toDoList = toDoListService.update(toDoListId, input, authorizedUserDetails.getId());
-
-        return ResponseEntity.ok(toDoList);
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Boolean> delete(@PathVariable("id") long toDoListId,
                                           Authentication authentication) {
@@ -81,5 +70,21 @@ public class ToDoListController implements AuthenticatedController {
         toDoListService.delete(toDoListId, authorizedUserDetails.getId());
 
         return ResponseEntity.ok(true);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ToDoListResponse> update(@PathVariable("id") long toDoListId,
+                                                   @RequestBody @Valid UpdateToDoListInput input,
+                                                   BindingResult params,
+                                                   Authentication authentication) {
+        if (params.hasErrors()) {
+            throw new BadRequestException(params.getFieldErrors().toString());
+        }
+
+        AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
+
+        ToDoListResponse toDoList = toDoListService.update(toDoListId, input, authorizedUserDetails.getId());
+
+        return ResponseEntity.ok(toDoList);
     }
 }

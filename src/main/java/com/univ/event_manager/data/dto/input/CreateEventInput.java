@@ -1,10 +1,9 @@
 package com.univ.event_manager.data.dto.input;
 
-import com.univ.event_manager.data.dto.output.LocationResponse;
-import com.univ.event_manager.data.entity.RecurringRule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -23,9 +22,11 @@ public class CreateEventInput {
     private String title;
 
     @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime startAt;
 
     @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime finishAt;
 
     private LocationInput location;

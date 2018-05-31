@@ -14,3 +14,6 @@ CREATE TABLE IF NOT EXISTS profile (
   google_token VARCHAR(50),
   notification_token VARCHAR(50)
 );
+
+ALTER SEQUENCE users_id_seq INCREMENT BY 50;
+ALTER SEQUENCE profile_id_seq INCREMENT BY 50;

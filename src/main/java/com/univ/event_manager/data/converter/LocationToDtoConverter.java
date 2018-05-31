@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 public class LocationToDtoConverter implements Converter<Location, LocationResponse> {
     @Override
     public LocationResponse convert(Location location) {
-        return null;
+        return LocationResponse.builder()
+                .address(location.getAddress())
+                .latitude(location.getLatitude())
+                .longitude(location.getLongitude())
+                .title(location.getTitle())
+                .build();
     }
 }

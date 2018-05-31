@@ -1,13 +1,11 @@
 package com.univ.event_manager.data.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 @Entity
 @Table(name = User.TABLE_NAME)
@@ -15,7 +13,8 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Builder
 @Data
-public class User {
+@EqualsAndHashCode(exclude = "profile")
+public class User implements Serializable {
     public static final String TABLE_NAME = "users";
 
     @Id

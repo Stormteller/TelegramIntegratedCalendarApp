@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class EventServiceImpl implements EventService {
-    private static final int EVENTS_TO_CREATE_IF_RECURRING = 100;
+    private static final int EVENTS_TO_CREATE_IF_RECURRING = 40;
 
     private final EventRepository eventRepository;
     private final RecurringRuleRepository recurringRuleRepository;

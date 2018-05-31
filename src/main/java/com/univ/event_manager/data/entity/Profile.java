@@ -3,6 +3,7 @@ package com.univ.event_manager.data.entity;
 import lombok.*;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 
 @Entity
@@ -12,7 +13,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Builder
 @EqualsAndHashCode(exclude = "user")
-public class Profile {
+public class Profile implements Serializable {
     public static final String TABLE_NAME = "profile";
 
     @Id
