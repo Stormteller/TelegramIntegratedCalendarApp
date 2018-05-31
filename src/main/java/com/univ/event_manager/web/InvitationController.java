@@ -26,7 +26,7 @@ public class InvitationController implements AuthenticatedController {
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<InvitationResponse> invitationById(@PathVariable("id") long invitationId,
+    public ResponseEntity<InvitationResponse> invitationById(@PathVariable("id") long invitationId,
                                                       Authentication authentication) {
 
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
@@ -37,7 +37,7 @@ public class InvitationController implements AuthenticatedController {
     }
 
     @GetMapping("/me")
-    ResponseEntity<Page<InvitationResponse>> invitationsForMe(Authentication authentication, Pageable pageable) {
+    public ResponseEntity<Page<InvitationResponse>> invitationsForMe(Authentication authentication, Pageable pageable) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
 
         Page<InvitationResponse> invitations = invitationService.getByUser(authorizedUserDetails.getId(), pageable);
@@ -46,7 +46,7 @@ public class InvitationController implements AuthenticatedController {
     }
 
     @PostMapping("/{id}/acceptance")
-    ResponseEntity<Boolean> acceptInvitation(@PathVariable("id") long invitationId,
+    public ResponseEntity<Boolean> acceptInvitation(@PathVariable("id") long invitationId,
                                              Authentication authentication) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
 
@@ -56,7 +56,7 @@ public class InvitationController implements AuthenticatedController {
     }
 
     @PostMapping("/{id}/declination")
-    ResponseEntity<Boolean> declineInvitation(@PathVariable("id") long invitationId,
+    public ResponseEntity<Boolean> declineInvitation(@PathVariable("id") long invitationId,
                                              Authentication authentication) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
 
@@ -66,7 +66,7 @@ public class InvitationController implements AuthenticatedController {
     }
 
     @PostMapping
-    ResponseEntity<Boolean> inviteUsers(@RequestBody @Valid InviteUsersInput input, Authentication authentication) {
+    public ResponseEntity<Boolean> inviteUsers(@RequestBody @Valid InviteUsersInput input, Authentication authentication) {
         AuthorizedUserDetails authorizedUserDetails = authPrincipal(authentication);
 
         invitationService.create(input.getUserIds(), input.getEventId(), authorizedUserDetails.getId());

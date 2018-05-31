@@ -1,11 +1,13 @@
 package com.univ.event_manager.service.impl;
 
 import com.univ.event_manager.data.dto.output.InvitationResponse;
+import com.univ.event_manager.data.entity.Event;
 import com.univ.event_manager.data.entity.Invitation;
 import com.univ.event_manager.data.entity.User;
 import com.univ.event_manager.data.entity.enums.InvitationStatus;
 import com.univ.event_manager.data.exception.NotFoundException;
 import com.univ.event_manager.data.exception.UnauthorizedException;
+import com.univ.event_manager.data.repository.EventRepository;
 import com.univ.event_manager.data.repository.InvitationRepository;
 import com.univ.event_manager.data.repository.UserRepository;
 import com.univ.event_manager.service.EventParticipantService;
@@ -18,12 +20,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class InvitationServiceImpl implements InvitationService {
 
     private final InvitationRepository invitationRepository;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
 
     private final EventParticipantService eventParticipantService;
 
@@ -32,17 +36,38 @@ public class InvitationServiceImpl implements InvitationService {
     @Autowired
     public InvitationServiceImpl(InvitationRepository invitationRepository,
                                  UserRepository userRepository,
+                                 EventRepository eventRepository,
                                  EventParticipantService eventParticipantService,
                                  Converter<Invitation, InvitationResponse> invitationConverter) {
         this.invitationRepository = invitationRepository;
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
         this.eventParticipantService = eventParticipantService;
         this.invitationConverter = invitationConverter;
     }
 
     @Override
+    @Transactional
     public List<InvitationResponse> create(List<Long> userIds, long eventId, long creatorId) {
-        return null;
+
+        User sender = userRepository.findById(creatorId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        List<Invitation> invitations = userIds.stream()
+                .map(userId ->
+                        Invitation.builder()
+                                .event(event)
+                                .receiverId(userId)
+                                .sender(sender)
+                                .build()
+                ).collect(Collectors.toList());
+
+        invitations = invitationRepository.saveAll(invitations);
+
+        return invitations.stream().map(invitationConverter::convert).collect(Collectors.toList());
     }
 
     @Override
