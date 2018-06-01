@@ -4,13 +4,15 @@ import com.univ.event_manager.data.dto.output.ErrorResponse;
 import com.univ.event_manager.data.exception.BadRequestException;
 import com.univ.event_manager.data.exception.NotFoundException;
 import com.univ.event_manager.data.exception.UnauthorizedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-//@ControllerAdvice
+@ControllerAdvice
+@Slf4j
 public class GlobalErrorHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException exception) {
@@ -40,6 +42,8 @@ public class GlobalErrorHandler {
     @ExceptionHandler({RuntimeException.class})
     public ResponseEntity<ErrorResponse> unhandledException(Exception exception) {
         String message = "Unhandled error. " + exception.getMessage();
+        log.error(exception.getMessage());
+        log.error(exception.getStackTrace().toString());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(message));
     }
 }

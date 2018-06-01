@@ -106,7 +106,7 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     @Transactional
     public Page<InvitationResponse> getByUser(long userId, Pageable pageable) {
-        return invitationRepository.findByReceiverId(userId, pageable).map(invitationConverter::convert);
+        return invitationRepository.findByReceiverIdAndStatus(userId, InvitationStatus.NEW, pageable).map(invitationConverter::convert);
     }
 
     @Override
