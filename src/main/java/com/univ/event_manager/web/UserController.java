@@ -58,7 +58,13 @@ public class UserController implements AuthenticatedController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponse> updateMe(Authentication auth, UpdateProfileInput input) {
+    public ResponseEntity<UserResponse> updateMe(Authentication auth,
+                                                 @RequestBody @Valid UpdateProfileInput input,
+                                                 BindingResult params) {
+        if (params.hasErrors()) {
+            throw new BadRequestException(params.getFieldErrors().toString());
+        }
+
         AuthorizedUserDetails authorizedUserDetails = this.authPrincipal(auth);
         UserResponse userResponse = userService.updateUser(input, authorizedUserDetails.getId());
 

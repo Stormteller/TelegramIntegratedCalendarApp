@@ -142,6 +142,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserResponse updateUser(UpdateProfileInput input, long id) {
         profileService.updateProfile(id, input);
 
